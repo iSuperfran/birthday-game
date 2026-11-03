@@ -1,11 +1,12 @@
 <!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>寻找人物说明书</title>
 <style>
-*{box-sizing:border-box}body{margin:0;background:#fcf3e4;color:#302346;font:16px system-ui,sans-serif}main{max-width:680px;margin:auto;padding:30px 18px 60px}header{background:#493367;color:#fff4e1;border-radius:26px;padding:26px;position:relative;overflow:hidden}header::after{content:'✦';color:#ffda83;position:absolute;right:24px;top:14px;font-size:48px}small{font-weight:700;letter-spacing:.14em;color:#ffda83}h1{font-size:clamp(27px,7vw,43px);margin:12px 0}p{line-height:1.55}nav{display:flex;gap:9px;overflow:auto;padding:14px 0;scroll-snap-type:x mandatory}button,input,textarea{font:inherit}button{cursor:pointer;border:0;border-radius:13px;background:#493367;color:white;padding:12px 16px;font-weight:700}nav button{flex:0 0 auto;scroll-snap-align:center;background:#eadcf4;color:#493367}nav button[aria-current=true]{background:#493367;color:white}article{padding:22px;background:#fffdf7;border-radius:24px;border:1px solid #e8dbc9}h2{margin:0 0 16px}dl{margin:0}dt{color:#63507c;font-size:14px;font-weight:700}dd{margin:4px 0 0;white-space:pre-wrap;overflow-wrap:anywhere}.field{border-bottom:1px solid #ebe2d3;padding:12px 0}label{display:block;font-weight:700;margin:12px 0}input,textarea{display:block;width:100%;padding:10px 12px;margin:5px 0;border:1px solid #b8a7c8;border-radius:10px;background:white;color:inherit}textarea{min-height:62px}#status{min-height:1.5em;color:#674481}table{width:100%;border-collapse:collapse}td,th{text-align:left;border-bottom:1px solid #eee;padding:8px;overflow-wrap:anywhere}#answers{margin-top:18px}
+*{box-sizing:border-box}body{margin:0;background:#faf0e0;color:#2d203e;font:16px system-ui,sans-serif}main{max-width:720px;margin:auto;padding:24px 16px 48px}header{background:#42305e;color:#fff5e7;border-radius:26px;padding:26px;position:relative}header:after{content:'✦';position:absolute;right:22px;top:15px;color:#ffd684;font-size:32px}small{color:#ffd684;letter-spacing:.13em;font-weight:700}h1{font-size:clamp(28px,7vw,43px);margin:10px 0}p{line-height:1.55}header p{margin-bottom:0}nav{display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;scroll-padding-inline:4px;padding:19px 4px 16px;scrollbar-width:thin;scrollbar-color:#9c83b4 transparent}nav button{flex:0 0 clamp(92px,26vw,132px);min-height:88px;scroll-snap-align:start;border:1px solid #bca8d0;border-radius:17px;background:#f1e4fa;color:#42305e;cursor:pointer;font:700 23px system-ui;overflow-wrap:anywhere;box-shadow:0 4px 0 #d7c1e3}nav button[aria-current=true]{background:#42305e;color:#fff6e7;border-color:#42305e;box-shadow:0 4px 0 #dba969}nav button span{display:block;font-size:12px;margin:4px 6px}article{margin-top:8px;padding:22px;background:#fffdf7;border-radius:25px;border:1px solid #e6d5be;box-shadow:0 12px 26px #49336713}h2{margin:0 0 16px;font-size:25px}dl{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin:0}.field{background:#f7efe3;border-radius:12px;padding:11px}.field:nth-child(3n+2){background:#eee5f6}.field:nth-child(3n){background:#edf0db}dt{font-weight:700;font-size:13px}dd{margin:5px 0 0;white-space:pre-wrap;overflow-wrap:anywhere}dd.empty{color:#695d72;font-size:13px}label{display:block;font-weight:700;margin-top:18px}input{display:block;width:100%;margin-top:7px;padding:12px;border:1px solid #aa93bf;border-radius:12px;font:inherit}article p,#status{color:#695d72;font-size:13px}button:focus-visible,input:focus-visible{outline:3px solid #a26932;outline-offset:2px}@media(prefers-reduced-motion:no-preference){nav{scroll-behavior:smooth}article{animation:enter .22s ease-out}@keyframes enter{from{opacity:.55;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}}
 </style>
 <main><header><small>BIRTHDAY CLUB / ROUND 01</small><h1>寻找人物说明书</h1><p id="intro">滑动挑选编号，看看线索，猜猜是谁。</p></header><nav aria-label="选择说明书"></nav><article id="card"></article><p id="status" role="status"></p><section id="answers"></section></main>
 <script>
 const fields=['别称 / 代号','MBTI','充电方式','兴趣爱好','别人做什么会让你感到开心','你的隐藏技能','跟你相处时需要注意什么','别人可能误解你的点','今年想实现的小目标'];
 
+// 每张卡的九个值按上面 fields 的顺序填写。
 const cards = {
  1: ["","","","","","","","",""],
  2: ["","","","","","","","",""],
@@ -37,7 +38,7 @@ const tabs=Array.from({length:13},(_,i)=>{
 function updateTabs(){
  tabs.forEach((button,i)=>{
   const id=i+1, guess=guesses[id]?.trim();
-  button.textContent='S'+id+(guess?' · '+guess:'');
+  button.textContent='S'+id; if(guess)el('span',guess,button);
   button.setAttribute('aria-current',String(id===n));
  });
 }
@@ -46,11 +47,9 @@ function render(){
  el('h2','S'+n+' · 人物说明书',card);
  const values=cards[n], list=el('dl','',card);
  fields.forEach((field,i)=>{
-  if(!values[i])return;
   const row=el('div','',list);row.className='field';
-  el('dt',field,row);el('dd',values[i],row);
+  el('dt',field,row);const detail=el('dd',values[i]||'待填写',row); if(!values[i])detail.className='empty';
  });
- if(!values.some(Boolean))el('p','这张说明书还在准备中。',card);
  const label=el('label','猜猜这是谁？',card);
  const input=el('input','',label);
  input.type='text';input.maxLength=30;input.placeholder='输入你猜的名字';input.value=guesses[n]||'';
