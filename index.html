@@ -1,0 +1,66 @@
+<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>寻找人物说明书</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#fcf3e4;color:#302346;font:16px system-ui,sans-serif}main{max-width:680px;margin:auto;padding:30px 18px 60px}header{background:#493367;color:#fff4e1;border-radius:26px;padding:26px;position:relative;overflow:hidden}header::after{content:'✦';color:#ffda83;position:absolute;right:24px;top:14px;font-size:48px}small{font-weight:700;letter-spacing:.14em;color:#ffda83}h1{font-size:clamp(27px,7vw,43px);margin:12px 0}p{line-height:1.55}nav{display:flex;gap:9px;overflow:auto;padding:14px 0;scroll-snap-type:x mandatory}button,input,textarea{font:inherit}button{cursor:pointer;border:0;border-radius:13px;background:#493367;color:white;padding:12px 16px;font-weight:700}nav button{flex:0 0 auto;scroll-snap-align:center;background:#eadcf4;color:#493367}nav button[aria-current=true]{background:#493367;color:white}article{padding:22px;background:#fffdf7;border-radius:24px;border:1px solid #e8dbc9}h2{margin:0 0 16px}dl{margin:0}dt{color:#63507c;font-size:14px;font-weight:700}dd{margin:4px 0 0;white-space:pre-wrap;overflow-wrap:anywhere}.field{border-bottom:1px solid #ebe2d3;padding:12px 0}label{display:block;font-weight:700;margin:12px 0}input,textarea{display:block;width:100%;padding:10px 12px;margin:5px 0;border:1px solid #b8a7c8;border-radius:10px;background:white;color:inherit}textarea{min-height:62px}#status{min-height:1.5em;color:#674481}table{width:100%;border-collapse:collapse}td,th{text-align:left;border-bottom:1px solid #eee;padding:8px;overflow-wrap:anywhere}#answers{margin-top:18px}
+</style>
+<main><header><small>BIRTHDAY CLUB / ROUND 01</small><h1>寻找人物说明书</h1><p id="intro">滑动挑选编号，看看线索，猜猜是谁。</p></header><nav aria-label="选择说明书"></nav><article id="card"></article><p id="status" role="status"></p><section id="answers"></section></main>
+<script>
+const fields=['别称 / 代号','MBTI','充电方式','兴趣爱好','别人做什么会让你感到开心','你的隐藏技能','跟你相处时需要注意什么','别人可能误解你的点','今年想实现的小目标'];
+
+const cards = {
+ 1: ["","","","","","","","",""],
+ 2: ["","","","","","","","",""],
+ 3: ["","","","","","","","",""],
+ 4: ["","","","","","","","",""],
+ 5: ["","","","","","","","",""],
+ 6: ["","","","","","","","",""],
+ 7: ["","","","","","","","",""],
+ 8: ["","","","","","","","",""],
+ 9: ["","","","","","","","",""],
+ 10: ["","","","","","","","",""],
+ 11: ["","","","","","","","",""],
+ 12: ["","","","","","","","",""],
+ 13: ["","","","","","","","",""]
+};
+const key='birthday-guesses-v1';
+let guesses={};
+try { guesses=JSON.parse(localStorage.getItem(key)||'{}')||{}; } catch {}
+let n=1;
+const nav=document.querySelector('nav'), card=document.querySelector('#card'), status=document.querySelector('#status');
+function el(tag,text,parent){
+ const node=document.createElement(tag);node.textContent=text;parent.append(node);return node;
+}
+const tabs=Array.from({length:13},(_,i)=>{
+ const button=el('button','S'+(i+1),nav);
+ button.onclick=()=>{n=i+1;render();button.scrollIntoView({block:'nearest',inline:'center'});};
+ return button;
+});
+function updateTabs(){
+ tabs.forEach((button,i)=>{
+  const id=i+1, guess=guesses[id]?.trim();
+  button.textContent='S'+id+(guess?' · '+guess:'');
+  button.setAttribute('aria-current',String(id===n));
+ });
+}
+function render(){
+ updateTabs();card.replaceChildren();status.textContent='';
+ el('h2','S'+n+' · 人物说明书',card);
+ const values=cards[n], list=el('dl','',card);
+ fields.forEach((field,i)=>{
+  if(!values[i])return;
+  const row=el('div','',list);row.className='field';
+  el('dt',field,row);el('dd',values[i],row);
+ });
+ if(!values.some(Boolean))el('p','这张说明书还在准备中。',card);
+ const label=el('label','猜猜这是谁？',card);
+ const input=el('input','',label);
+ input.type='text';input.maxLength=30;input.placeholder='输入你猜的名字';input.value=guesses[n]||'';
+ const id=n;
+ input.oninput=()=>{
+  guesses[id]=input.value;updateTabs();
+  try {localStorage.setItem(key,JSON.stringify(guesses));}
+  catch {status.textContent='浏览器无法保存，刷新后猜测会清空。';}
+ };
+ el('p','猜测会自动保存在当前浏览器。',card);
+}
+render();
+</script></html>
