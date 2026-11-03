@@ -1,8 +1,15 @@
 <!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>寻找人物说明书</title>
 <style>
 *{box-sizing:border-box}body{margin:0;background:#faf0e0;color:#2d203e;font:16px system-ui,sans-serif}main{max-width:720px;margin:auto;padding:24px 16px 48px}header{background:#42305e;color:#fff5e7;border-radius:26px;padding:26px;position:relative}header:after{content:'✦';position:absolute;right:22px;top:15px;color:#ffd684;font-size:32px}small{color:#ffd684;letter-spacing:.13em;font-weight:700}h1{font-size:clamp(28px,7vw,43px);margin:10px 0}p{line-height:1.55}header p{margin-bottom:0}nav{display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;scroll-padding-inline:4px;padding:19px 4px 16px;scrollbar-width:thin;scrollbar-color:#9c83b4 transparent}nav button{flex:0 0 clamp(92px,26vw,132px);min-height:88px;scroll-snap-align:start;border:1px solid #bca8d0;border-radius:17px;background:#f1e4fa;color:#42305e;cursor:pointer;font:700 23px system-ui;overflow-wrap:anywhere;box-shadow:0 4px 0 #d7c1e3}nav button[aria-current=true]{background:#42305e;color:#fff6e7;border-color:#42305e;box-shadow:0 4px 0 #dba969}nav button span{display:block;font-size:12px;margin:4px 6px}article{margin-top:8px;padding:22px;background:#fffdf7;border-radius:25px;border:1px solid #e6d5be;box-shadow:0 12px 26px #49336713}h2{margin:0 0 16px;font-size:25px}dl{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin:0}.field{background:#f7efe3;border-radius:12px;padding:11px}.field:nth-child(3n+2){background:#eee5f6}.field:nth-child(3n){background:#edf0db}dt{font-weight:700;font-size:13px}dd{margin:5px 0 0;white-space:pre-wrap;overflow-wrap:anywhere}dd.empty{color:#695d72;font-size:13px}label{display:block;font-weight:700;margin-top:18px}input{display:block;width:100%;margin-top:7px;padding:12px;border:1px solid #aa93bf;border-radius:12px;font:inherit}article p,#status{color:#695d72;font-size:13px}button:focus-visible,input:focus-visible{outline:3px solid #a26932;outline-offset:2px}@media(prefers-reduced-motion:no-preference){nav{scroll-behavior:smooth}article{animation:enter .22s ease-out}@keyframes enter{from{opacity:.55;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}}
+nav{position:relative;display:block;overflow:hidden;height:245px;margin-top:14px;background:#241b33;border-radius:24px;touch-action:pan-y;padding:0;isolation:isolate}
+nav button{position:absolute;left:50%;top:29px;width:clamp(72px,22vw,120px);height:140px;min-height:0;border:1px solid #ffffff60;background:var(--color);color:#251b34;box-shadow:0 5px 12px #0005;transform:translate(calc(-50% + var(--x)),var(--y)) rotate(var(--angle));transition:transform .3s ease,opacity .2s ease}
+nav button[aria-current=true]{background:var(--color);color:#251b34;border:2px solid white;box-shadow:0 6px 18px #0007}
+nav button[hidden]{display:none}
+.deck-controls{display:flex;justify-content:space-between;align-items:center;margin:-48px 12px 16px;position:relative;z-index:20;color:white;pointer-events:none}
+.deck-controls button{pointer-events:auto;border:0;border-radius:12px;padding:7px 14px;background:#fff2;color:white;font-size:20px;cursor:pointer}
+@media(prefers-reduced-motion:reduce){nav button{transition:none}}
 </style>
-<main><header><small>BIRTHDAY CLUB / ROUND 01</small><h1>寻找人物说明书</h1><p id="intro">滑动挑选编号，看看线索，猜猜是谁。</p></header><nav aria-label="选择说明书"></nav><article id="card"></article><p id="status" role="status"></p><section id="answers"></section></main>
+<main><header><small>BIRTHDAY CLUB / ROUND 01</small><h1>寻找人物说明书</h1><p id="intro">滑动挑选编号，看看线索，猜猜是谁。</p></header><nav aria-label="选择说明书"></nav><div class="deck-controls"><button id="prev" aria-label="上一张">‹</button><span id="deck-count"></span><button id="next" aria-label="下一张">›</button></div><article id="card"></article><p id="status" role="status"></p><section id="answers"></section></main>
 <script>
 const fields=['别称 / 代号','MBTI','充电方式','兴趣爱好','别人做什么会让你感到开心','你的隐藏技能','跟你相处时需要注意什么','别人可能误解你的点','今年想实现的小目标'];
 
@@ -32,14 +39,35 @@ function el(tag,text,parent){
 }
 const tabs=Array.from({length:13},(_,i)=>{
  const button=el('button','S'+(i+1),nav);
- button.onclick=()=>{n=i+1;render();button.scrollIntoView({block:'nearest',inline:'center'});};
+ button.onclick=()=>{if(!swiped)select(i+1);};
  return button;
 });
+const colors=['#ff927e','#ffcf73','#b9df83','#78dbd4','#8bb9fa','#bba1fb','#f3a1d5'];
+const select=id=>{n=(id+12)%13+1;render();};
+document.querySelector('#prev').onclick=()=>select(n-1);
+document.querySelector('#next').onclick=()=>select(n+1);
+let start=null, swiped=false;
+nav.addEventListener('pointerdown',e=>{start=e.clientX;swiped=false;});
+nav.addEventListener('pointerup',e=>{
+ if(start===null)return;
+ const dx=e.clientX-start;start=null;
+ if(Math.abs(dx)>26){swiped=true;select(n+(dx<0?1:-1));}
+});
+nav.addEventListener('pointercancel',()=>{start=null;});
+nav.addEventListener('keydown',e=>{if(['ArrowLeft','ArrowRight'].includes(e.key)){e.preventDefault();select(n+(e.key==='ArrowLeft'?-1:1));tabs[n-1].focus();}});
 function updateTabs(){
+ document.querySelector('#deck-count').textContent=n+' / 13';
  tabs.forEach((button,i)=>{
   const id=i+1, guess=guesses[id]?.trim();
   button.textContent='S'+id; if(guess)el('span',guess,button);
   button.setAttribute('aria-current',String(id===n));
+  const offset=(id-n+19)%13-6;
+  button.hidden=Math.abs(offset)>4;
+  button.style.setProperty('--x','clamp('+Math.min(offset*52,offset*31)+'px, '+offset*8+'vw, '+Math.max(offset*52,offset*31)+'px)');
+  button.style.setProperty('--y',(offset*offset*2.8)+'px');
+  button.style.setProperty('--angle',(offset*8)+'deg');
+  button.style.setProperty('--color',colors[i%colors.length]);
+  button.style.zIndex=10-Math.abs(offset);
  });
 }
 function render(){
