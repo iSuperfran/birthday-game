@@ -1,35 +1,245 @@
 <!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>寻找人物说明书</title>
 <style>
 *{box-sizing:border-box}body{margin:0;background:#faf0e0;color:#2d203e;font:16px system-ui,sans-serif}main{max-width:720px;margin:auto;padding:24px 16px 48px}header{background:#42305e;color:#fff5e7;border-radius:26px;padding:26px;position:relative}header:after{content:'✦';position:absolute;right:22px;top:15px;color:#ffd684;font-size:32px}small{color:#ffd684;letter-spacing:.13em;font-weight:700}h1{font-size:clamp(28px,7vw,43px);margin:10px 0}p{line-height:1.55}header p{margin-bottom:0}nav{display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;scroll-padding-inline:4px;padding:19px 4px 16px;scrollbar-width:thin;scrollbar-color:#9c83b4 transparent}nav button{flex:0 0 clamp(92px,26vw,132px);min-height:88px;scroll-snap-align:start;border:1px solid #bca8d0;border-radius:17px;background:#f1e4fa;color:#42305e;cursor:pointer;font:700 23px system-ui;overflow-wrap:anywhere;box-shadow:0 4px 0 #d7c1e3}nav button[aria-current=true]{background:#42305e;color:#fff6e7;border-color:#42305e;box-shadow:0 4px 0 #dba969}nav button span{display:block;font-size:12px;margin:4px 6px}article{margin-top:8px;padding:22px;background:#fffdf7;border-radius:25px;border:1px solid #e6d5be;box-shadow:0 12px 26px #49336713}h2{margin:0 0 16px;font-size:25px}dl{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin:0}.field{background:#f7efe3;border-radius:12px;padding:11px}.field:nth-child(3n+2){background:#eee5f6}.field:nth-child(3n){background:#edf0db}dt{font-weight:700;font-size:13px}dd{margin:5px 0 0;white-space:pre-wrap;overflow-wrap:anywhere}dd.empty{color:#695d72;font-size:13px}label{display:block;font-weight:700;margin-top:18px}input{display:block;width:100%;margin-top:7px;padding:12px;border:1px solid #aa93bf;border-radius:12px;font:inherit}article p,#status{color:#695d72;font-size:13px}button:focus-visible,input:focus-visible{outline:3px solid #a26932;outline-offset:2px}@media(prefers-reduced-motion:no-preference){nav{scroll-behavior:smooth}article{animation:enter .22s ease-out}@keyframes enter{from{opacity:.55;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}}
-nav{display:flex;align-items:center;height:168px;padding:12px calc(50% - var(--half) + 17px);--half:clamp(42px,12vw,57px);gap:0;overflow-x:auto;scroll-snap-type:x mandatory;scroll-padding:0;scrollbar-width:none;overscroll-behavior-inline:contain}
+nav{display:flex;align-items:center;height:168px;padding:12px calc(50% - var(--half) + 23px);--half:clamp(42px,12vw,57px);gap:0;overflow-x:auto;scroll-snap-type:x mandatory;scroll-padding:0;scrollbar-width:none;overscroll-behavior-inline:contain}
 nav::-webkit-scrollbar{display:none}
-nav button{position:relative;flex:0 0 calc(var(--half)*2);margin-inline:-17px;height:108px;scroll-snap-align:center;background:var(--color);color:#251b34;transform:perspective(420px) translateX(var(--fan-x,0px)) rotateY(var(--turn,0deg)) scale(var(--zoom,1));transition:none;box-shadow:none}
+nav button{position:relative;flex:0 0 calc(var(--half)*2);margin-inline:-23px;height:108px;scroll-snap-align:center;background:var(--color);color:#251b34;transform:perspective(420px) translateX(var(--fan-x,0px)) rotateY(var(--turn,0deg)) scale(var(--zoom,1));transition:none;box-shadow:none}
 nav button[aria-current=true]{background:var(--color);color:#251b34;box-shadow:0 5px 12px #42305e30}
 .deck-controls{display:flex;justify-content:space-between;align-items:center;color:#42305e;margin:0 4px 14px}
 .deck-controls button{border:0;border-radius:10px;padding:4px 15px;background:#eadcf4;color:#42305e;font-size:22px;cursor:pointer}
 @media(prefers-reduced-motion:reduce){nav button{transition:none}}
+dd{line-height:1.65}
+dd.collapsed{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;overflow:hidden}
+.expand-toggle{display:block;border:0;padding:6px 0 0;background:transparent;color:#634185;font:600 13px system-ui;cursor:pointer}
 </style>
-<main><header><small>BIRTHDAY CLUB / ROUND 01</small><h1>寻找人物说明书</h1><p id="intro">滑动挑选编号，看看线索，猜猜是谁。</p></header><nav aria-label="选择说明书"></nav><div class="deck-controls"><button id="prev" aria-label="上一张">‹</button><span id="deck-count"></span><button id="next" aria-label="下一张">›</button></div><article id="card"></article><p id="status" role="status"></p><section id="answers"></section></main>
+<main><header><small>BIRTHDAY CLUB</small><h1>寻找人物说明书</h1><p id="intro">滑动挑选编号，看看线索，猜猜是谁。</p></header><nav aria-label="选择说明书"></nav><div class="deck-controls"><button id="prev" aria-label="上一张">‹</button><span id="deck-count"></span><button id="next" aria-label="下一张">›</button></div><article id="card"></article><p id="status" role="status"></p><section id="answers"></section></main>
 <script>
-const fields=['别称 / 代号','MBTI','充电方式','兴趣爱好','别人做什么会让你感到开心','你的隐藏技能','跟你相处时需要注意什么','别人可能误解你的点','今年想实现的小目标'];
+const fields=['MBTI','充电方式','兴趣爱好','别人做什么会让你感到开心','你的隐藏技能','跟你相处时需要注意什么','别人可能误解你的点','今年想实现的小目标'];
 
-// 每张卡的九个值按上面 fields 的顺序填写。
+// 每张卡八项信息。
 const cards = {
- 1: ["","","","","","","","",""],
- 2: ["","","","","","","","",""],
- 3: ["","","","","","","","",""],
- 4: ["","","","","","","","",""],
- 5: ["","","","","","","","",""],
- 6: ["","","","","","","","",""],
- 7: ["","","","","","","","",""],
- 8: ["","","","","","","","",""],
- 9: ["","","","","","","","",""],
- 10: ["","","","","","","","",""],
- 11: ["","","","","","","","",""],
- 12: ["","","","","","","","",""],
- 13: ["","","","","","","","",""]
+  "1": [
+    "entj",
+    "看书，网上找资料",
+    "骑行漫游，自驾是一个宿舍兜风",
+    "在我薄弱的知识领域指导我",
+    "善于从人的一举一动读懂性格，推断对方品性",
+    "无",
+    "全部无",
+    "学会人工智能"
+  ],
+  "2": [
+    "intj",
+    "独处",
+    "画画、游戏",
+    "陪我一起做想做的事情，在与我出去的时候不要臭脸",
+    "我还会下棋来着，不过没什么用感觉",
+    "有一点点洁癖，很讨厌不准时，不想说的事情不要追问",
+    "感觉没有，，",
+    "找到实习"
+  ],
+  "3": [
+    "esfj",
+    "睡觉，追剧，和朋友聊天",
+    "睡觉，追剧",
+    "愿意花时间和我在一起",
+    "无",
+    "事务性的东西已读不回（或者不同意也不拒绝），对答应好的事情不上心或者无所谓的态度",
+    "没表情的时候可能以为我在生气",
+    "养成早睡早起的好习惯"
+  ],
+  "4": [
+    "infj",
+    "独处默想、和朋友聊天、吃东西",
+    "看书写字吃",
+    "记得我随口说的话，喜好。\n举个例子吧哈哈哈，上次去上海我朋友在犹太难民纪念馆买了一些纪念品给我，有笔记本，他知道我很喜欢写日记，还有明信片、祝福卡我也喜欢明信片这些有纪念意义的东西，还有给我写的信可以看得出来我之前说的他都记在心上了，还有朋友圈的内容也非常认真的看了，心里就非常慰藉哈哈哈，非常投我所好，很喜欢很开心！\n带我去吃好吃的我也很开心！",
+    "隐藏技能？！有待发现～",
+    "我有点拖拉，很害怕让别人等……我害怕别人指责我或者用反问的句式和语气跟我说话，害怕反问型人格……我不会跟别人吵架所以不要凶我哈哈哈",
+    "我不是文艺A",
+    "存款稳定5位数以上"
+  ],
+  "5": [
+    "intj",
+    "玩游戏",
+    "乒乓，玩游戏",
+    "带着我做有意义的事",
+    "记仇",
+    "讨厌不准时，背叛",
+    "觉得我不会情绪上头",
+    "调整好作息"
+  ],
+  "6": [
+    "infp",
+    "独处呆着/看电视剧/和朋友聊天/画画听歌",
+    "养植物/养小猫咪/看综艺电视剧电影/音乐/冲咖啡/羽毛球",
+    "鼓励我   看到我的属于我的特点；特别的为我花时间倾听我/记得我喜欢的东西",
+    "技能都不隐藏😁",
+    "尽量答应的事情说到做到，如果没做到其实也没关系，但不要推卸责任和找借口；\n尽量爱干净吧！偶尔脏乱没关系 不要持续～\n如果是工作的话，可以提高一点效率😁",
+    "不熟悉的人觉得我非常好说话（哈哈哈其实还是有原则的）\n熟悉的人觉得我也许有点要求很高 严格（但其实只是想追求成长和做好）",
+    "没有什么太特别的小目标也！\n如果可以 希望自己可以保持运动 还有把控休息和生活的时间～\n也希望可以陪伴爸爸开始读经"
+  ],
+  "7": [
+    "enfj",
+    "和朋友聊天",
+    "桌游 羽毛球 游泳 旅游 追剧",
+    "真心待我",
+    "",
+    "没啥 自然就好",
+    "高冷",
+    "预答辩顺利通过"
+  ],
+  "8": [
+    "enfp",
+    "和朋友贴贴！！！一起玩！来一场说走就走的旅行！！不过   本人偶尔也很要安静的时间",
+    "看书 看电影",
+    "真诚夸夸我！鼓励的言语",
+    "演技派",
+    "可以给我提供适当安全感吗！",
+    "我很坚强….",
+    "我的实验能顺利结束…"
+  ],
+  "9": [
+    "isfp",
+    "独处",
+    "听音乐，拼乐高，睡觉，吃好吃的",
+    "认真听我说话",
+    "",
+    "洁癖，讨厌不准时，不熟的时候不要肢体接触，要有一点边界感",
+    "冷脸",
+    "稳定读bible"
+  ],
+  "10": [
+    "istp",
+    "睡觉",
+    "打游戏",
+    "可能记得我随口说的话吧",
+    "暂时没想到😵‍💫",
+    "没啥需要注意的",
+    "觉得我生人勿近",
+    "法语学完a2"
+  ],
+  "11": [
+    "infp",
+    "独处（追追剧）\n听歌\n跑步",
+    "追剧",
+    "1.记得我随口说的话\n2.会很真诚的夸我\n3.别人笑的时候，我看着自己心里也很开心",
+    "会突然变的很大胆，但维持时效很短🧐🧐",
+    "间接性没电🪫（能量耗尽可能会有点臭脸😭无恶意）",
+    "不礼貌吧！或者畏手畏脚（但实则是因为我很怕尴尬😭😭太内敛了，就没敢看对方的眼睛或者不知道说什么回应）实则🈚️恶意😭😭",
+    "期末成绩可以达到自己的预期\n去一次旅游"
+  ],
+  "12": [
+    "enfj",
+    "和朋友一起",
+    "钢琴，追剧",
+    "肯定的言语，默默为我准备惊喜",
+    "在相处久了之后会特别活泼，有很多话",
+    "说话语气吧，有时候说话太急会有点不舒服",
+    "反应慢，没有及时回应和给情绪价值",
+    "学习进步，对我的信仰希望能有更多认识，还有存钱哈哈"
+  ],
+  "13": [
+    "istj",
+    "呆在家追剧看综艺、吃美食、去旅行",
+    "爬山、唱歌、弹吉他",
+    "聊天时能回应我的每一句话",
+    "毒舌",
+    "轻微强迫症和中度洁癖，稍微不太能接受突然的安排和打乱先前的计划（协商后可接受的可以）",
+    "认为我很内向温柔哈哈哈（内向是真的）",
+    "欸还有两个月，就适应现在的工作环境，同时保持与s的连结"
+  ],
+  "14": [
+    "isfp",
+    "独处",
+    "篮球",
+    "all",
+    "无",
+    "自来熟",
+    "臭脸",
+    "减到120"
+  ],
+  "15": [
+    "istj",
+    "心情不好、伤心、玩累的时候一般独处，想聊天、放松的时候想找朋友玩、聊天",
+    "打篮球或者运动、看电影综艺",
+    "挺多的，很容易被打动，比如记住随口说的话、一些生活中微小的照顾或者惊喜、有时候为我解难等等",
+    "暂未解锁",
+    "有一些洁癖，比如和别人一起喝东西（但绝对不是嫌弃！）\n不太能接受不守时或放鸽子除非真的重要的事，但希望提前说\n讨厌拖延，可以完成的希望尽快完成不是等到ddl",
+    "挺高冷不太好相处、没什么意思，只是我很慢热，内心防线比较高，但接触熟了会很疯癫\n\n觉得我大大咧咧，但其实内心很敏感很细腻（只是不熟不会展现），经常因为一些小事晚上睡前会哭一直想不开",
+    "升学顺利、考公顺利、一切顺利！"
+  ],
+  "16": [
+    "enfp",
+    "和别人聊很深入的天",
+    "模型，吉他，羽毛球",
+    "肯定我",
+    "手搓一些物件",
+    "注意不要标签化我",
+    "永远不会难过",
+    "读完一遍圣经"
+  ],
+  "17": [
+    "infp",
+    "独处，看剧，购物，和朋友聊天",
+    "写手帐，看剧，玩小猫",
+    "记得我的喜好，突然的惊喜",
+    "好像没有",
+    "没有时间观念",
+    "觉得我高冷其实只是害羞",
+    "瘦五斤六斤七斤八斤（最少瘦五斤吧）"
+  ],
+  "18": [
+    "isfp",
+    "打游戏",
+    "打游戏，打球",
+    "被鼓励",
+    "",
+    "无",
+    "没有",
+    "实验做成功"
+  ],
+  "19": [
+    "enfj",
+    "偶尔需要独处，大部分时候是和好朋友一起玩比较充电",
+    "篮球，游泳，骑行，健身，唱歌，乐器，旅游，打游戏等",
+    "惊喜或有心的准备，还有就是鼓励的话和关心的话",
+    "会变魔术",
+    "包容性比较强，通常没有啥特别要注意的，别背刺就行",
+    "应该没有吧，有的话我应该会在合适的时候说。不过我是个比较会开玩笑的人，希望有些话如果伤到谁了我表示抱歉，如果觉得不舒服请告诉我，我会改。",
+    "发论文啦啦啦"
+  ],
+  "20": [
+    "enfj",
+    "睡觉，独处",
+    "打游戏，买衣服",
+    "有话直说，夸我🤓",
+    "",
+    "不要有话藏着不说",
+    "脾气不好",
+    "把吃胖的十斤减下去"
+  ],
+  "21": [
+    "infp",
+    "独处",
+    "运动",
+    "陪伴",
+    "语言？乒乓球，足球，",
+    "无",
+    "最近别人问我我是双性",
+    "赚钱"
+  ],
+  "22": [
+    "enfj",
+    "逛商场，睡觉，和朋友一起出去吃好吃的，躺床上刷抖音",
+    "追星的时候去线下",
+    "关心到我的感受和想法，不会让我在人很多的时候落单",
+    "不知道😖小时候还会舞蹈和画画的，现在都丢弃了。还没有丢的，朗诵？但是我渐渐很客观地发现自己天赋有限，做得也没那么好。我会打蛋仔派对",
+    "不喜欢太以自我为中心的人，忽略别人的感受和利益。也不太喜欢一直反驳我的人，因为我也会反驳回去，两个人非得争出个对错，感觉有点有损情谊。",
+    "这个要听别人说吧，我也不太知道",
+    "我还能减肥成功吗？好想恢复进食自由😢"
+  ]
 };
-const key='birthday-guesses-v1';
+const key='birthday-guesses-shuffled-v2';
 let guesses={};
 try { guesses=JSON.parse(localStorage.getItem(key)||'{}')||{}; } catch {}
 let n=1;
@@ -37,14 +247,15 @@ const nav=document.querySelector('nav'), card=document.querySelector('#card'), s
 function el(tag,text,parent){
  const node=document.createElement(tag);node.textContent=text;parent.append(node);return node;
 }
-const tabs=Array.from({length:13},(_,i)=>{
+const total=Object.keys(cards).length;
+const tabs=Array.from({length:total},(_,i)=>{
  const button=el('button','S'+(i+1),nav);
  button.onclick=()=>{select(i+1);};
  return button;
 });
 const colors=['#ff927e','#ffcf73','#b9df83','#78dbd4','#8bb9fa','#bba1fb','#f3a1d5'];
 const select=id=>{
- const index=Math.max(1,Math.min(13,id))-1;
+ const index=Math.max(1,Math.min(total,id))-1;
  nav.scrollTo({left:tabs[index].offsetLeft-tabs[0].offsetLeft,behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'});
 };
 document.querySelector('#prev').onclick=()=>select(n-1);
@@ -65,14 +276,14 @@ nav.addEventListener('scroll',()=>{
  if(!frame)frame=requestAnimationFrame(()=>{
   frame=0;
   const step=tabs[1].offsetLeft-tabs[0].offsetLeft;
-  const position=Math.max(0,Math.min(12,nav.scrollLeft/step));
+  const position=Math.max(0,Math.min(total-1,nav.scrollLeft/step));
   perspective(position);
   const next=Math.round(position)+1;
   if(next!==centered){
    tabs[centered-1].setAttribute('aria-current','false');
    tabs[next-1].setAttribute('aria-current','true');
    centered=next;
-   document.querySelector('#deck-count').textContent=next+' / 13';
+   document.querySelector('#deck-count').textContent=next+' / '+total;
   }
  });
  clearTimeout(settle);
@@ -82,7 +293,7 @@ nav.addEventListener('keydown',e=>{
  if(['ArrowLeft','ArrowRight'].includes(e.key)){e.preventDefault();select(centered+(e.key==='ArrowLeft'?-1:1));}
 });
 function updateTabs(){
- document.querySelector('#deck-count').textContent=n+' / 13';
+ document.querySelector('#deck-count').textContent=n+' / '+total;
  tabs.forEach((button,i)=>{
   const id=i+1, guess=guesses[id]?.trim();
   button.textContent='S'+id; if(guess)el('span',guess,button);
@@ -96,7 +307,21 @@ function render(){
  const values=cards[n], list=el('dl','',card);
  fields.forEach((field,i)=>{
   const row=el('div','',list);row.className='field';
-  el('dt',field,row);const detail=el('dd',values[i]||'待填写',row); if(!values[i])detail.className='empty';
+  el('dt',field,row);const detail=el('dd',values[i]||'未填写',row); if(!values[i])detail.className='empty';
+  if(values[i].length>55 || values[i].split('\n').length>3){
+   detail.classList.add('collapsed');
+   detail.id='detail-'+n+'-'+i;
+   const toggle=el('button','展开',row);
+   toggle.className='expand-toggle';toggle.type='button';
+   toggle.setAttribute('aria-expanded','false');
+   toggle.setAttribute('aria-controls',detail.id);
+   toggle.onclick=()=>{
+    const expanded=toggle.getAttribute('aria-expanded')!=='true';
+    toggle.setAttribute('aria-expanded',String(expanded));
+    detail.classList.toggle('collapsed',!expanded);
+    toggle.textContent=expanded?'收起':'展开';
+   };
+  }
  });
  const label=el('label','猜猜这是谁？',card);
  const input=el('input','',label);
@@ -111,4 +336,5 @@ function render(){
 }
 render();
 </script></html>
+
 
