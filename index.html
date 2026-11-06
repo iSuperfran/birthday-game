@@ -11,9 +11,13 @@ nav button[aria-current=true]{background:var(--color);color:#251b34;box-shadow:0
 dd{line-height:1.65}
 dd.collapsed{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;overflow:hidden}
 .expand-toggle{display:block;border:0;padding:6px 0 0;background:transparent;color:#634185;font:600 13px system-ui;cursor:pointer}
-article{touch-action:pan-y pinch-zoom}
+#card{display:flex;align-items:flex-start;gap:12px;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;scrollbar-width:none;overscroll-behavior-inline:contain}
+#card::-webkit-scrollbar{display:none}
+#card article{flex:0 0 100%;min-width:0;margin:0;scroll-snap-align:start;scroll-snap-stop:always;animation:none}
+@media(prefers-reduced-motion:no-preference){#card{transition:height .18s ease}}
+
 </style>
-<main><header><small>BIRTHDAY CLUB</small><h1>寻找人物说明书</h1></header><nav aria-label="选择说明书"></nav><div class="deck-controls"><button id="prev" aria-label="上一张">‹</button><span id="deck-count"></span><button id="next" aria-label="下一张">›</button></div><article id="card"></article><p id="status" role="status"></p><section id="answers"></section></main>
+<main><header><small>BIRTHDAY CLUB</small><h1>寻找人物说明书</h1></header><nav aria-label="选择说明书"></nav><div class="deck-controls"><button id="prev" aria-label="上一张">‹</button><span id="deck-count"></span><button id="next" aria-label="下一张">›</button></div><section id="card" aria-label="人物说明书"></section><p id="status" role="status"></p><section id="answers"></section></main>
 <script>
 const fields=['MBTI','充电方式','兴趣爱好','别人做什么会让你感到开心','你的隐藏技能','跟你相处时需要注意什么','别人可能误解你的点','今年想实现的小目标'];
 
@@ -261,7 +265,7 @@ const select=id=>{
 };
 document.querySelector('#prev').onclick=()=>select(n-1);
 document.querySelector('#next').onclick=()=>select(n+1);
-let frame=0, settle=0, centered=1;
+let frame=0, settle=0, centered=1, syncingNav=false;
 function perspective(position){
  tabs.forEach((tab,i)=>{
   const distance=i-position;
@@ -288,27 +292,17 @@ nav.addEventListener('scroll',()=>{
   }
  });
  clearTimeout(settle);
- settle=setTimeout(()=>{if(n!==centered){n=centered;render();}},130);
+ settle=setTimeout(()=>{
+  if(syncingNav){syncingNav=false;return;}
+  if(n!==centered){
+   n=centered;updateTabs();fitPage();
+   card.scrollTo({left:pages[n-1].offsetLeft-pages[0].offsetLeft,behavior:motion()});
+  }
+ },130);
 },{passive:true});
 nav.addEventListener('keydown',e=>{
  if(['ArrowLeft','ArrowRight'].includes(e.key)){e.preventDefault();select(centered+(e.key==='ArrowLeft'?-1:1));}
 });
-let detailSwipe=null;
-card.addEventListener('pointerdown',event=>{
- if(event.pointerType==='mouse' || event.target.closest('input,button,a,textarea,select'))return;
- detailSwipe={id:event.pointerId,x:event.clientX,y:event.clientY,page:n};
- card.setPointerCapture(event.pointerId);
-});
-card.addEventListener('pointerup',event=>{
- if(!detailSwipe || detailSwipe.id!==event.pointerId)return;
- const start=detailSwipe;
- detailSwipe=null;
- const dx=event.clientX-start.x, dy=event.clientY-start.y;
- if(Math.abs(dx)<50 || Math.abs(dx)<Math.abs(dy)*1.4)return;
- select(start.page+(dx<0?1:-1));
-});
-card.addEventListener('pointercancel',()=>{detailSwipe=null;});
-card.addEventListener('lostpointercapture',()=>{detailSwipe=null;});
 function updateTabs(){
  document.querySelector('#deck-count').textContent=n+' / '+total;
  tabs.forEach((button,i)=>{
@@ -318,16 +312,17 @@ function updateTabs(){
   button.style.setProperty('--color',colors[i%colors.length]);
  });
 }
-function render(){
- updateTabs();card.replaceChildren();status.textContent='';
- el('h2','S'+n+' · 人物说明书',card);
- const values=cards[n], list=el('dl','',card);
+function buildPage(id){
+ const page=el('article','',card);
+ page.setAttribute('aria-label','S'+id+' 人物说明书');
+ el('h2','S'+id+' · 人物说明书',page);
+ const values=cards[id], list=el('dl','',page);
  fields.forEach((field,i)=>{
   const row=el('div','',list);row.className='field';
   el('dt',field,row);const detail=el('dd',values[i]||'未填写',row); if(!values[i])detail.className='empty';
   if(values[i].length>55 || values[i].split('\n').length>3){
    detail.classList.add('collapsed');
-   detail.id='detail-'+n+'-'+i;
+   detail.id='detail-'+id+'-'+i;
    const toggle=el('button','展开',row);
    toggle.className='expand-toggle';toggle.type='button';
    toggle.setAttribute('aria-expanded','false');
@@ -340,18 +335,43 @@ function render(){
    };
   }
  });
- const label=el('label','猜猜这是谁？',card);
+ const label=el('label','猜猜这是谁？',page);
  const input=el('input','',label);
- input.type='text';input.maxLength=30;input.placeholder='输入你猜的名字';input.value=guesses[n]||'';
- const id=n;
+ input.type='text';input.maxLength=30;input.placeholder='输入你猜的名字';input.value=guesses[id]||'';
  input.oninput=()=>{
   guesses[id]=input.value;updateTabs();
   try {localStorage.setItem(key,JSON.stringify(guesses));}
   catch {status.textContent='浏览器无法保存，刷新后猜测会清空。';}
  };
- el('p','猜测会自动保存在当前浏览器。',card);
+ el('p','猜测会自动保存在当前浏览器。',page);
+ return page;
 }
-render();
+const motion=()=>matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth';
+const pages=Array.from({length:total},(_,i)=>buildPage(i+1));
+function fitPage(){
+ card.style.height=pages[n-1].offsetHeight+'px';
+}
+const resize=new ResizeObserver(fitPage);
+pages.forEach(page=>resize.observe(page));
+let pageFrame=0;
+card.addEventListener('scroll',()=>{
+ if(pageFrame)return;
+ pageFrame=requestAnimationFrame(()=>{
+  pageFrame=0;
+  const step=pages[1].offsetLeft-pages[0].offsetLeft;
+  const next=Math.max(1,Math.min(total,Math.round(card.scrollLeft/step)+1));
+  if(next===n)return;
+  n=next;centered=n;updateTabs();fitPage();
+  syncingNav=true;
+  nav.scrollTo({left:tabs[n-1].offsetLeft-tabs[0].offsetLeft,behavior:'instant'});
+ });
+},{passive:true});
+window.addEventListener('resize',()=>{
+ card.scrollTo({left:pages[n-1].offsetLeft-pages[0].offsetLeft,behavior:'instant'});
+ fitPage();
+});
+updateTabs();fitPage();
 </script></html>
+
 
 
