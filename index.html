@@ -406,6 +406,7 @@ card.addEventListener('pointermove',event=>{
   card.classList.add('dragging');
   card.setPointerCapture(event.pointerId);
  }
+ if(event.cancelable)event.preventDefault();
  const step=pages[1].offsetLeft-pages[0].offsetLeft;
  swipe.dx=Math.max(-step*.95,Math.min(step*.95,dx));
  card.scrollLeft=pages[swipe.page-1].offsetLeft-pages[0].offsetLeft-swipe.dx;
@@ -416,13 +417,15 @@ function finishSwipe(event,cancelled){
  card.classList.remove('dragging');
  if(!current.dragging)return;
  blockClickUntil=performance.now()+350;
- const threshold=Math.min(75,card.clientWidth*.2);
+ const threshold=Math.min(48,card.clientWidth*.14);
  const direction=!cancelled && Math.abs(current.dx)>threshold?(current.dx<0?1:-1):0;
  snapTo(Math.max(1,Math.min(total,current.page+direction)));
 }
 card.addEventListener('pointerup',event=>finishSwipe(event,false));
 card.addEventListener('pointercancel',event=>finishSwipe(event,true));
-card.addEventListener('lostpointercapture',event=>finishSwipe(event,true));
+card.addEventListener('lostpointercapture',event=>{
+ if(event.target===card)finishSwipe(event,true);
+});
 card.addEventListener('click',event=>{
  if(performance.now()<blockClickUntil){event.preventDefault();event.stopPropagation();}
 },true);
