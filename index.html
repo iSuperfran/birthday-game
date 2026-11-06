@@ -11,8 +11,9 @@ nav button[aria-current=true]{background:var(--color);color:#251b34;box-shadow:0
 dd{line-height:1.65}
 dd.collapsed{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;overflow:hidden}
 .expand-toggle{display:block;border:0;padding:6px 0 0;background:transparent;color:#634185;font:600 13px system-ui;cursor:pointer}
+article{touch-action:pan-y pinch-zoom}
 </style>
-<main><header><small>BIRTHDAY CLUB</small><h1>寻找人物说明书</h1><p id="intro">滑动挑选编号，看看线索，猜猜是谁。</p></header><nav aria-label="选择说明书"></nav><div class="deck-controls"><button id="prev" aria-label="上一张">‹</button><span id="deck-count"></span><button id="next" aria-label="下一张">›</button></div><article id="card"></article><p id="status" role="status"></p><section id="answers"></section></main>
+<main><header><small>BIRTHDAY CLUB</small><h1>寻找人物说明书</h1></header><nav aria-label="选择说明书"></nav><div class="deck-controls"><button id="prev" aria-label="上一张">‹</button><span id="deck-count"></span><button id="next" aria-label="下一张">›</button></div><article id="card"></article><p id="status" role="status"></p><section id="answers"></section></main>
 <script>
 const fields=['MBTI','充电方式','兴趣爱好','别人做什么会让你感到开心','你的隐藏技能','跟你相处时需要注意什么','别人可能误解你的点','今年想实现的小目标'];
 
@@ -292,6 +293,22 @@ nav.addEventListener('scroll',()=>{
 nav.addEventListener('keydown',e=>{
  if(['ArrowLeft','ArrowRight'].includes(e.key)){e.preventDefault();select(centered+(e.key==='ArrowLeft'?-1:1));}
 });
+let detailSwipe=null;
+card.addEventListener('pointerdown',event=>{
+ if(event.pointerType==='mouse' || event.target.closest('input,button,a,textarea,select'))return;
+ detailSwipe={id:event.pointerId,x:event.clientX,y:event.clientY,page:n};
+ card.setPointerCapture(event.pointerId);
+});
+card.addEventListener('pointerup',event=>{
+ if(!detailSwipe || detailSwipe.id!==event.pointerId)return;
+ const start=detailSwipe;
+ detailSwipe=null;
+ const dx=event.clientX-start.x, dy=event.clientY-start.y;
+ if(Math.abs(dx)<50 || Math.abs(dx)<Math.abs(dy)*1.4)return;
+ select(start.page+(dx<0?1:-1));
+});
+card.addEventListener('pointercancel',()=>{detailSwipe=null;});
+card.addEventListener('lostpointercapture',()=>{detailSwipe=null;});
 function updateTabs(){
  document.querySelector('#deck-count').textContent=n+' / '+total;
  tabs.forEach((button,i)=>{
